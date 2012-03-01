@@ -116,3 +116,8 @@ template "#{node['cf9']['install_path']}/wwwroot/WEB-INF/jrun-web.xml" do
   notifies :restart, "service[coldfusion]", :delayed
 end
 
+# Start CF
+service "coldfusion" do
+  action :start
+end
+
