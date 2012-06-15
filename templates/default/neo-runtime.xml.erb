@@ -85,6 +85,11 @@
 				<var name="/CFIDE">
 					<string>/opt/coldfusion9/wwwroot/CFIDE</string>
 				</var>
+				<% node['cf9']['mappings'].each do |logicalPath, directoryPath| %>
+          <var name="<%= logicalPath %>">
+            <string><%= directoryPath %></string>
+          </var>
+        <% end %>
 			</struct>
 			<struct type="coldfusion.server.ConfigMap">
 				<var name="CFCLimit">

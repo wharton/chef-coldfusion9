@@ -21,14 +21,19 @@ package "iptables-persistent" do
   action :install
 end
 
+service "iptables-persistent" do	
+	supports :restart => true
+	action :nothing
+end
+
 # Customize the firewall rules config
-template "/etc/iptables/rules" do
+template "/etc/iptables/rules.v4" do  
+  if node[:platform_version] == "10.04"
+  	path "/etc/iptables/rules"
+  end 
   source "rules.erb"
   mode "0644"
   owner "root"
   group "root"
-end
-
-service "iptables-persistent" do
-	action :restart
+  notifies :restart, "service[iptables-persistent]"  
 end

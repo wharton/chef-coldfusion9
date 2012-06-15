@@ -17,52 +17,63 @@
 # limitations under the License.
 #
 
+
+
 # Stop CF
-service "coldfusion" do
-  action :stop
+execute "/bin/true" do
   not_if { File.exists?("#{node['cf9']['install_path']}/lib/updates/chf9010002.jar") }
+  notifies :stop, "service[coldfusion]", :immediately
 end
 
-# Download and install ColdFusion 9.0.1 : Cumulative Hot fix 2 (http://kb2.adobe.com/cps/918/cpsid_91836.html)
+if node['cf9']['chf9010002'] && node['cf9']['chf9010002']['CF901']
 
-remote_file "#{Chef::Config['file_cache_path']}/CF901.zip" do
-  source "http://kb2.adobe.com/cps/918/cpsid_91836/attachments/CF901.zip"
-  action :create_if_missing
-  mode "0744"
-  owner "root"
-  group "root"
-  not_if { File.exists?("#{node['cf9']['install_path']}/lib/updates/chf9010002.jar") }
+  # Download and ColdFusion 9.0.1 : Cumulative Hot fix 2 files (http://kb2.adobe.com/cps/918/cpsid_91836.html)
+  remote_file "#{Chef::Config['file_cache_path']}/CF901.zip" do
+    source "#{node['cf9']['chf9010002']['CF901']['url']}"
+    action :create_if_missing
+    mode "0744"
+    owner "root"
+    group "root"
+    not_if { File.exists?("#{node['cf9']['install_path']}/lib/updates/chf9010002.jar") }
+  end
+
+else 
+
+  # If using cookbook files, move the ColdFusion 9.0.1 : Cumulative Hot fix 2 files
+  cookbook_file "#{Chef::Config['file_cache_path']}/CF901.zip" do
+    source "CF901.zip"
+    mode "0744"
+    owner "root"
+    group "root"
+  end 
+
+
 end
 
-remote_file "#{Chef::Config['file_cache_path']}/CFIDE-901.zip" do
-  source "http://kb2.adobe.com/cps/918/cpsid_91836/attachments/CFIDE-901.zip"
-  action :create_if_missing
-  mode "0744"
-  owner "root"
-  group "root"
-  not_if { File.exists?("#{node['cf9']['install_path']}/lib/updates/chf9010002.jar") }
+if node['cf9']['chf9010002'] && node['cf9']['chf9010002']['CFIDE-901']
+
+  # Download and ColdFusion 9.0.1 : Cumulative Hot fix 2 files (http://kb2.adobe.com/cps/918/cpsid_91836.html)
+  remote_file "#{Chef::Config['file_cache_path']}/CFIDE-901.zip" do
+    source "#{node['cf9']['chf9010002']['CFIDE-901']['url']}"
+    action :create_if_missing
+    mode "0744"
+    owner "root"
+    group "root"
+    not_if { File.exists?("#{node['cf9']['install_path']}/lib/updates/chf9010002.jar") }
+  end
+
+else 
+
+  # If using cookbook files, move the ColdFusion 9.0.1 : Cumulative Hot fix 2 files
+  cookbook_file "#{Chef::Config['file_cache_path']}/CFIDE-901.zip" do
+    source "CFIDE-901.zip"
+    mode "0744"
+    owner "root"
+    group "root"
+  end 
+
 end
-
-=begin
-
-# If using cookbook files, move the ColdFusion 9.0.1 : Cumulative Hot fix 2 files
  
-cookbook_file "#{Chef::Config['file_cache_path']}/CF901.zip" do
-  source "CF901.zip"
-  mode "0744"
-  owner "root"
-  group "root"
-end 
-  
-cookbook_file "#{Chef::Config['file_cache_path']}/CFIDE-901.zip" do
-  source "CFIDE-901.zip"
-  mode "0744"
-  owner "root"
-  group "root"
-end 
- 
-=end
-
 script "install_chf9010002" do
   interpreter "bash"
   user "root"
@@ -81,3 +92,10 @@ script "install_chf9010002" do
   not_if { File.exists?("#{node['cf9']['install_path']}/lib/updates/chf9010002.jar") }
   notifies :restart, "service[coldfusion]", :delayed
 end
+
+# Start CF
+execute "/bin/true" do
+  not_if { File.exists?("#{node['cf9']['install_path']}/lib/updates/chf9010002.jar") }
+  notifies :start, "service[coldfusion]", :immediately
+end
+

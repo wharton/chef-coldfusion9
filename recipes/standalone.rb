@@ -26,13 +26,30 @@ template "#{Chef::Config['file_cache_path']}/cf9-installer.properties" do
   not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9_InstallLog.log") }
 end
 
-# Move the CF 9 installer
-cookbook_file "#{Chef::Config['file_cache_path']}/ColdFusion_9_WWE_linux.bin" do
-  source "ColdFusion_9_WWE_linux.bin"
-  mode "0744"
-  owner "root"
-  group "root"
-  not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9_InstallLog.log") }
+
+if node['cf9']['standalone'] && node['cf9']['standalone']['9-installer']
+
+  # Download CF 9
+  remote_file "#{Chef::Config['file_cache_path']}/ColdFusion_9_WWE_linux.bin" do
+    source "#{node['cf9']['standalone']['9-installer']['url']}"
+    action :create_if_missing
+    mode "0744"
+    owner "root"
+    group "root"
+    not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9_InstallLog.log") }
+  end
+
+else
+
+  # Move the CF 9 installer
+  cookbook_file "#{Chef::Config['file_cache_path']}/ColdFusion_9_WWE_linux.bin" do
+    source "ColdFusion_9_WWE_linux.bin"
+    mode "0744"
+    owner "root"
+    group "root"
+    not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9_InstallLog.log") }
+  end
+
 end
 
 # Run the CF 9 installer
@@ -49,16 +66,16 @@ link "/etc/init.d/coldfusion" do
   to "#{node['cf9']['install_path']}/bin/coldfusion"
 end
 
-# Set up CF as a service and stop for CF 9.0.1 installation
+# Set up CF as a service for CF 9.0.1 installation
 service "coldfusion" do  
   supports :restart => true
-  action [ :enable, :start ]
+  action :enable
 end
 
 # Stop CF
-service "coldfusion" do
-  action :stop
+execute "/bin/true" do
   not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9.0.1_InstallLog.log") }
+  notifies :stop, "service[coldfusion]", :immediately
 end
 
 # Create the CF 9.0.1 installer input file - hack to workaround silent installtion issues
@@ -70,23 +87,30 @@ template "#{Chef::Config['file_cache_path']}/cf901-installer.input" do
   not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9.0.1_InstallLog.log") }
 end
 
-# Download CF 9.0.1 (http://www.adobe.com/support/coldfusion/downloads_updates.html)
-remote_file "#{Chef::Config['file_cache_path']}/ColdFusion_update_901_WWEJ_linux.bin" do
-  source "http://download.macromedia.com/pub/coldfusion/updates/901/ColdFusion_update_901_WWEJ_linux.bin"
-  action :create_if_missing
-  mode "0744"
-  owner "root"
-  group "root"
-  not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9.0.1_InstallLog.log") }
-end
 
-# If using a cookbook file, move the CF 9.0.1 installer 
-#cookbook_file "#{Chef::Config['file_cache_path']}/ColdFusion_update_901_WWEJ_linux.bin" do
-#  source "ColdFusion_update_901_WWEJ_linux.bin"
-#  mode "0744"
-#  owner "root"
-#  group "root"
-#end
+if node['cf9']['standalone'] && node['cf9']['standalone']['901-installer']
+
+  # Download CF 9.0.1 (http://www.adobe.com/support/coldfusion/downloads_updates.html)
+  remote_file "#{Chef::Config['file_cache_path']}/ColdFusion_update_901_WWEJ_linux.bin" do
+    source "#{node['cf9']['standalone']['901-installer']['url']}"
+    action :create_if_missing
+    mode "0744"
+    owner "root"
+    group "root"
+    not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9.0.1_InstallLog.log") }
+  end
+
+else
+
+  # Move the CF 9.0.1 installer 
+  cookbook_file "#{Chef::Config['file_cache_path']}/ColdFusion_update_901_WWEJ_linux.bin" do
+    source "ColdFusion_update_901_WWEJ_linux.bin"
+    mode "0744"
+    owner "root"
+    group "root"
+  end
+
+end 
 
 # Run the CF 9.0.1 installer
 execute "cf901_installer" do
@@ -117,7 +141,8 @@ template "#{node['cf9']['install_path']}/wwwroot/WEB-INF/jrun-web.xml" do
 end
 
 # Start CF
-service "coldfusion" do
-  action :start
+execute "/bin/true" do
+  not_if { File.exists?("#{node['cf9']['install_path']}/Adobe_ColdFusion_9.0.1_InstallLog.log") }
+  notifies :start, "service[coldfusion]", :immediately
 end
 

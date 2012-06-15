@@ -18,7 +18,7 @@
 #
 
 if node.recipe?("java")   
-  node['cf9']['java_home'] = "/usr/lib/jvm/default-java"
+  node['cf9']['java_home'] = node['java']['java_home']
 end
 
 # Import the certs
